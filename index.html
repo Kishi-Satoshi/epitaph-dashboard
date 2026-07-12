@@ -2,55 +2,303 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Epitaph ダッシュボード</title>
+<title>Epitaph</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-  :root { color-scheme: light dark; }
-  * { box-sizing: border-box; }
-  body { font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
-         margin: 0; background: #0f172a; color: #e2e8f0; }
-  .wrap { max-width: 1000px; margin: 0 auto; padding: 16px; }
-  .gate { max-width: 380px; margin: 15vh auto; text-align: center; padding: 24px; }
-  .gate input { width: 100%; padding: 12px; font-size: 16px; border-radius: 8px;
-                border: 1px solid #334155; background: #1e293b; color: #e2e8f0; margin: 12px 0; }
-  .gate button { width: 100%; padding: 12px; font-size: 16px; border: none; border-radius: 8px;
-                 background: #4f46e5; color: #fff; cursor: pointer; }
-  .err { color: #f87171; font-size: 14px; min-height: 20px; }
-  h1 { font-size: 20px; } h2 { font-size: 16px; color: #94a3b8; margin-top: 28px; }
-  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-  .card { background: #1e293b; border-radius: 10px; padding: 14px; }
-  .card .label { font-size: 12px; color: #94a3b8; } .card .val { font-size: 22px; font-weight: bold; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { padding: 8px; border-bottom: 1px solid #334155; text-align: right; }
-  th:first-child, td:first-child { text-align: left; }
-  .pos { color: #34d399; } .neg { color: #f87171; }
-  .muted { color: #64748b; font-size: 12px; }
-  .tbl-wrap { overflow-x: auto; }
-  #app { display: none; }
+  :root {
+    color-scheme: light dark;
+    --bg: #EEF1F7; --bg2: #E3E9F4;
+    --ink: #1A2233; --muted: #5A6478; --faint: #8A93A8;
+    --glass: rgba(255,255,255,.58); --glass-strong: rgba(255,255,255,.78);
+    --stroke: rgba(255,255,255,.9); --stroke2: rgba(30,40,70,.08);
+    --shadow: 0 18px 50px -18px rgba(30,45,90,.28), 0 4px 14px -6px rgba(30,45,90,.14);
+    --pos: #177A4C; --neg: #C43D3D; --accent: #1D63C7; --accent2: #7A4BD6;
+    --pos-soft: rgba(23,122,76,.12); --neg-soft: rgba(196,61,61,.10);
+    --blob1: #B7C9F5; --blob2: #E4C6F0; --blob3: #BEE7D9;
+    --ring-track: rgba(30,45,90,.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0B0F1A; --bg2: #0E1424;
+      --ink: #E8ECF5; --muted: #9AA5BC; --faint: #6B7590;
+      --glass: rgba(23,30,48,.55); --glass-strong: rgba(28,36,58,.75);
+      --stroke: rgba(255,255,255,.14); --stroke2: rgba(255,255,255,.06);
+      --shadow: 0 24px 60px -20px rgba(0,0,0,.65), 0 6px 18px -8px rgba(0,0,0,.5);
+      --pos: #3DD68C; --neg: #FF6B6B; --accent: #2E7FE8; --accent2: #9D6BFF;
+      --pos-soft: rgba(61,214,140,.13); --neg-soft: rgba(255,107,107,.12);
+      --blob1: #1E3A8A; --blob2: #5B21B6; --blob3: #065F46;
+      --ring-track: rgba(255,255,255,.09);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+      "Hiragino Kaku Gothic ProN", "Yu Gothic UI", Meiryo, sans-serif;
+    background: var(--bg); color: var(--ink); min-height: 100vh;
+    overflow-x: hidden;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+             env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+
+  /* ---- 背景: 漂うグラデーションブロブ ---- */
+  #bg { position: fixed; inset: -20%; z-index: -1; overflow: hidden;
+        background: linear-gradient(160deg, var(--bg) 0%, var(--bg2) 100%); }
+  .blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; }
+  .b1 { width: 55vw; height: 55vw; background: var(--blob1); top: -8%; left: -12%;
+        animation: drift1 26s ease-in-out infinite alternate; }
+  .b2 { width: 46vw; height: 46vw; background: var(--blob2); top: 28%; right: -14%;
+        animation: drift2 32s ease-in-out infinite alternate; }
+  .b3 { width: 40vw; height: 40vw; background: var(--blob3); bottom: -12%; left: 22%;
+        animation: drift3 38s ease-in-out infinite alternate; }
+  @keyframes drift1 { to { transform: translate(9vw, 7vh) scale(1.12); } }
+  @keyframes drift2 { to { transform: translate(-7vw, -6vh) scale(.92); } }
+  @keyframes drift3 { to { transform: translate(-5vw, -8vh) scale(1.08); } }
+  @media (prefers-reduced-motion: reduce) {
+    .blob { animation: none !important; }
+    * { transition: none !important; animation-duration: .001s !important; }
+  }
+
+  /* ---- ガラスパネル共通 ---- */
+  .glass {
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(22px) saturate(1.6);
+    backdrop-filter: blur(22px) saturate(1.6);
+    border-radius: 26px;
+    border: 1px solid var(--stroke2);
+    box-shadow: var(--shadow), inset 0 1px 0 var(--stroke);
+    position: relative; overflow: hidden;
+  }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass { background: var(--glass-strong); }
+  }
+  .glass::before { /* 上端スペキュラハイライト */
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 42%;
+    background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0));
+    pointer-events: none; border-radius: 26px 26px 0 0;
+  }
+
+  .wrap { max-width: 860px; margin: 0 auto; padding: 18px 16px 60px; }
+
+  /* ---- パスワードゲート ---- */
+  #gate { min-height: 92vh; display: flex; align-items: center; justify-content: center; }
+  .gate-card { width: min(400px, 92vw); padding: 40px 30px 32px; text-align: center;
+               transition: transform .5s cubic-bezier(.2,.9,.3,1.2), opacity .4s; }
+  .gate-card.away { transform: scale(1.06) translateY(-14px); opacity: 0; }
+  .lock-orb { width: 76px; height: 76px; margin: 0 auto 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    box-shadow: 0 12px 30px -8px rgba(60,90,220,.55), inset 0 1px 0 rgba(255,255,255,.4); }
+  .gate-card h1 { font-size: 22px; letter-spacing: .12em; font-weight: 700; }
+  .gate-card .sub { color: var(--muted); font-size: 13px; margin: 8px 0 22px; }
+  .gate-card input {
+    width: 100%; padding: 14px 16px; font-size: 16px; border-radius: 14px;
+    border: 1px solid var(--stroke2); background: var(--glass-strong);
+    color: var(--ink); outline: none; text-align: center; letter-spacing: .1em;
+    transition: box-shadow .2s; }
+  .gate-card input:focus { box-shadow: 0 0 0 3px rgba(80,120,240,.35); }
+  .gate-card button {
+    width: 100%; margin-top: 14px; padding: 14px; font-size: 16px; font-weight: 700;
+    border: none; border-radius: 14px; color: #fff; cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    box-shadow: 0 10px 26px -8px rgba(70,90,230,.6), inset 0 1px 0 rgba(255,255,255,.35);
+    transition: transform .15s, filter .2s; }
+  .gate-card button:active { transform: scale(.97); filter: brightness(1.1); }
+  .err { color: var(--neg); font-size: 13px; min-height: 20px; margin-top: 12px; }
+  .shake { animation: shake .4s; }
+  @keyframes shake { 20%,60% { transform: translateX(-8px);} 40%,80% { transform: translateX(8px);} }
+
+  /* ---- アプリ ---- */
+  #app { display: none; opacity: 0; transform: translateY(10px);
+         transition: opacity .6s, transform .6s; }
+  #app.in { opacity: 1; transform: none; }
+
+  .top { display: flex; align-items: center; justify-content: space-between;
+         padding: 8px 6px 16px; }
+  .brand { font-weight: 800; letter-spacing: .22em; font-size: 15px; }
+  .asof { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11.5px; }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--pos);
+           box-shadow: 0 0 0 0 var(--pos); animation: pulse 2.4s infinite; }
+  @keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(0,0,0,0); } }
+
+  .hero { padding: 26px 24px 22px; text-align: center; margin-bottom: 14px; }
+  .hero .label { font-size: 12px; color: var(--muted); letter-spacing: .14em; }
+  .hero .big { font-size: clamp(38px, 11vw, 56px); font-weight: 800; line-height: 1.15;
+               margin: 6px 0 2px; }
+  .hero .big.pos { color: var(--pos); text-shadow: 0 0 34px var(--pos-soft); }
+  .hero .big.neg { color: var(--neg); text-shadow: 0 0 34px var(--neg-soft); }
+  .hero .split { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+                 margin-top: 12px; }
+  .chip { padding: 6px 13px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+          background: var(--glass-strong); border: 1px solid var(--stroke2);
+          color: var(--muted); }
+  .chip b { color: var(--ink); }
+  .chip.pos b { color: var(--pos); } .chip.neg b { color: var(--neg); }
+  .ath-badge { display: none; margin: 10px auto 0; width: fit-content;
+    padding: 6px 16px; border-radius: 999px; font-size: 12.5px; font-weight: 700;
+    color: #7A5A00; background: linear-gradient(135deg, #FFE9A8, #FFD666);
+    box-shadow: 0 6px 18px -6px rgba(255,190,40,.55); }
+  @media (prefers-color-scheme: dark) { .ath-badge { color: #3d2e00; } }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr);
+          gap: 12px; margin-bottom: 14px; }
+  @media (max-width: 560px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+  .tile { padding: 16px 14px; text-align: center; }
+  .tile .t-label { font-size: 11px; color: var(--muted); letter-spacing: .05em; }
+  .tile .t-val { font-size: 22px; font-weight: 800; margin-top: 4px; }
+  .tile .t-sub { font-size: 10.5px; color: var(--faint); margin-top: 3px; }
+
+  .card { padding: 20px; margin-bottom: 14px; }
+  .card h2 { font-size: 13.5px; color: var(--muted); font-weight: 700;
+             letter-spacing: .08em; margin-bottom: 14px; display: flex;
+             align-items: center; gap: 8px; }
+  .card h2 .em { font-size: 16px; }
+
+  /* 目標リング */
+  .ring-wrap { display: flex; align-items: center; gap: 18px; }
+  .ring-box { position: relative; width: 116px; height: 116px; flex: none; }
+  .ring-box svg { transform: rotate(-90deg); }
+  .ring-center { position: absolute; inset: 0; display: flex; flex-direction: column;
+                 align-items: center; justify-content: center; }
+  .ring-center .pct { font-size: 23px; font-weight: 800; }
+  .ring-center .cap { font-size: 10px; color: var(--faint); }
+  .ring-info .line1 { font-size: 15px; font-weight: 700; }
+  .ring-info .line2 { font-size: 12.5px; color: var(--muted); margin-top: 5px; }
+  .ring-info .line3 { font-size: 12.5px; margin-top: 8px; font-weight: 600; }
+
+  .streak-face { font-size: 40px; line-height: 1; }
+  .streak-num { font-size: 26px; font-weight: 800; margin-top: 4px; }
+  .streak-cap { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+
+  .rec-row { display: flex; justify-content: space-between; align-items: center;
+             padding: 9px 0; border-bottom: 1px solid var(--stroke2); font-size: 13px; }
+  .rec-row:last-child { border-bottom: none; }
+  .rec-row .who { color: var(--muted); overflow: hidden; text-overflow: ellipsis;
+                  white-space: nowrap; max-width: 55%; }
+
+  .chart-box { position: relative; height: 210px; }
+  .chart-note { font-size: 10.5px; color: var(--faint); margin-top: 10px; }
+
+  /* ポジションカード */
+  .pos-card { padding: 16px 18px; margin-bottom: 12px; }
+  .pos-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .pos-name { font-weight: 700; font-size: 15px; }
+  .pos-code { color: var(--faint); font-size: 11.5px; margin-left: 6px; }
+  .pos-pnl { font-size: 21px; font-weight: 800; white-space: nowrap; }
+  .pos-meta { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 12px; }
+  .tag { font-size: 10.5px; padding: 3px 10px; border-radius: 999px; font-weight: 600;
+         background: var(--glass-strong); border: 1px solid var(--stroke2);
+         color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .hp { position: relative; height: 10px; border-radius: 999px; background: var(--ring-track);
+        overflow: visible; }
+  .hp-fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px;
+             background: linear-gradient(90deg, var(--accent), var(--pos));
+             transition: width 1s cubic-bezier(.2,.8,.2,1); }
+  .hp-cursor { position: absolute; top: -3px; width: 4px; height: 16px; border-radius: 2px;
+               background: var(--ink); box-shadow: 0 0 0 2px var(--bg); }
+  .hp-labels { display: flex; justify-content: space-between; font-size: 10.5px;
+               color: var(--faint); margin-top: 7px; }
+  .pos-nums { display: flex; justify-content: space-between; font-size: 12px;
+              color: var(--muted); margin-top: 10px; flex-wrap: wrap; gap: 6px; }
+
+  /* トレード行 */
+  .trade { display: flex; align-items: center; gap: 12px; padding: 11px 4px;
+           border-bottom: 1px solid var(--stroke2); font-size: 13px; }
+  .trade:last-child { border-bottom: none; }
+  .w-orb { width: 34px; height: 34px; border-radius: 12px; flex: none; display: flex;
+           align-items: center; justify-content: center; font-size: 15px; font-weight: 800; }
+  .w-orb.win { background: var(--pos-soft); color: var(--pos); }
+  .w-orb.loss { background: var(--neg-soft); color: var(--neg); }
+  .trade .mid { flex: 1; min-width: 0; }
+  .trade .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .trade .dt { font-size: 11px; color: var(--faint); }
+  .trade .amt { text-align: right; font-weight: 700; white-space: nowrap; }
+  .trade .amt .p { font-size: 11px; font-weight: 600; color: var(--faint); display: block; }
+
+  /* Bull/Bear */
+  .duel { border-radius: 18px; border: 1px solid var(--stroke2); padding: 14px;
+          margin-bottom: 12px; background: var(--glass-strong); }
+  .duel-head { display: flex; justify-content: space-between; align-items: center;
+               margin-bottom: 10px; font-size: 13.5px; font-weight: 700; }
+  .verdict { font-size: 10.5px; padding: 3px 10px; border-radius: 999px; font-weight: 700; }
+  .v-proceed { background: var(--pos-soft); color: var(--pos); }
+  .v-reduce { background: rgba(192,126,31,.15); color: #C07E1F; }
+  .v-veto { background: var(--neg-soft); color: var(--neg); }
+  .duel-body { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 560px) { .duel-body { grid-template-columns: 1fr; } }
+  .side { border-radius: 12px; padding: 10px 12px; font-size: 12px; line-height: 1.6; }
+  .side.bull { background: var(--pos-soft); }
+  .side.bear { background: var(--neg-soft); }
+  .side .s-tag { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; }
+  .side.bull .s-tag { color: var(--pos); } .side.bear .s-tag { color: var(--neg); }
+  .duel-outcome { margin-top: 10px; font-size: 12px; font-weight: 700; }
+
+  /* 較正バー */
+  .cal-row { display: grid; grid-template-columns: 64px 1fr 88px; gap: 10px;
+             align-items: center; margin-bottom: 12px; font-size: 12.5px; }
+  .cal-bar { height: 12px; border-radius: 999px; background: var(--ring-track);
+             overflow: hidden; }
+  .cal-fill { height: 100%; border-radius: 999px; background:
+              linear-gradient(90deg, var(--accent), var(--accent2));
+              transition: width 1s cubic-bezier(.2,.8,.2,1); }
+  .cal-side { text-align: right; color: var(--muted); }
+
+  /* NISAゲージ */
+  .nisa-bar { height: 14px; border-radius: 999px; background: var(--ring-track); overflow: hidden; }
+  .nisa-fill { height: 100%; border-radius: 999px;
+               background: linear-gradient(90deg, #1F9D66, #2E7FE8); width: 0;
+               transition: width 1.2s cubic-bezier(.2,.8,.2,1); }
+  .nisa-cap { display: flex; justify-content: space-between; font-size: 11.5px;
+              color: var(--muted); margin-top: 8px; }
+
+  /* ウォームアップ */
+  .warm { text-align: center; padding: 44px 24px; }
+  .warm .orbit { width: 66px; height: 66px; margin: 0 auto 16px; border-radius: 50%;
+    border: 3px solid var(--ring-track); border-top-color: var(--accent);
+    animation: spin 2.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .warm h3 { font-size: 17px; margin-bottom: 8px; }
+  .warm p { font-size: 13px; color: var(--muted); line-height: 1.8; }
+
+  .foot { text-align: center; color: var(--faint); font-size: 10.5px;
+          margin-top: 26px; line-height: 1.8; }
+  .pos-c { color: var(--pos); } .neg-c { color: var(--neg); }
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
 </style>
 </head>
 <body>
-<div id="gate" class="gate">
-  <h1>🔒 Epitaph ダッシュボード</h1>
-  <p class="muted">閲覧パスワードを入力してください</p>
-  <input id="pw" type="password" placeholder="パスワード" autofocus>
-  <button id="unlock">表示する</button>
-  <div id="err" class="err"></div>
+<div id="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<canvas id="confetti"></canvas>
+
+<div id="gate">
+  <div class="gate-card glass" id="gateCard">
+    <div class="lock-orb">🔐</div>
+    <h1>EPITAPH</h1>
+    <div class="sub">プライベート運用ダッシュボード<br>閲覧パスワードを入力してください</div>
+    <input id="pw" type="password" placeholder="••••••••" autofocus
+           autocomplete="current-password">
+    <button id="unlock">ロック解除</button>
+    <div id="err" class="err"></div>
+  </div>
 </div>
 
 <div id="app" class="wrap"></div>
 
 <script>
-const ENC = {"salt": "j/1YjrP7l31dw0bHKHB6yA==", "iv": "TNfkJrflvvn4CYzs", "ct": "cIipiJVYwD1EeumpzpBUhdCgMLTXt55P0JNZ8iQr1L0fzXstdU+r3LEv6wgR5Q3n5ybDd7YDNFvWqsqaE9d3xcHmz3U9fZ/kTi+d7br7dmnXadl27rbT2hhUAQgfNahdCsSvCw22weogQNxy/8cHRmlhyxOYsVhRLrHX+F4f8Pi8DSnCtmGVOBCWM+W/NXoz/OEl/1ErFYjQxIBtDUI8JJERUFWUFF62EOQJKRWg3ccleFkRu4Q6i81NlLvYCDHph00zCpAVCzJ/jl6j2/6jLj3wMWV3wzJ0e34m/Jc24hGoCFVP1VsPayyHTIb1U6D7sPIYIG3P+5EnbW3bDzCMrA==", "iterations": 200000};
+const ENC = {"salt": "VSKmqpPcrS+NMEFyxFFFMw==", "iv": "oAxYFfNxFAcKnCjp", "ct": "AC5hLFpzRpk/nbDc/017HqXC+sZEGrAH6YVc8tTUD9jkgoaD1/TREhHRmvmL7ZHnMfzVsTfeF6e6MFXGUraU0SN0yIWgZCUEM9EH2nSRUcfzGacMRKk2nWCVboMhi1sy57ISF+BBr63J94yczeJTgMWjnOa3oRmTKSgcYIoplZWoHFGT7DTtKx1sdN+NR6Xjqfr8/GShjwq3JSo8QT2V7M6Ltndjp0GStK23BMLyqphkLCszUlVmofUEDef38iysNx5/jwhXG4IA37cW7hg6tFx0HtTsCYbcIkwCwdgPmdSDPU6pFIdLED/13bmigz974SyV/hWR2j0JfdsdME+4Lg8+vQtDmdzh/6RSpFz8PizPNtij3HW1c2Y/3qn+hP2xMSyUfU7xKaZj1CrOvQldC7YfR7I9LEzJv+4ZcxBDLoZrGaiDrYaqnYj15v6JBFC0vBY0WNSqdJFzm0nlA9rVuQZoM/rNsy+s9uvzXnNts2evm9gFjEOIrFxWuARovAFbvNK6X02fe0ERjQAtXFcyMSx+oe9nGA6924gwJVmLZl40qbqwuoVkj0M8NugrIk9uxtBtg0ICxyfwilBg9pjyoIyq10eBXvWN2XZt/T8Gyqm4VdiVWLId2u46zct+yLStzvG8Fp2pdEWtLSnXSB+Qc8OvVSjC4zDKEoFs708Ae0sJriwR65P8CdZtciWzJ56AVkfdM2fgIA60uER9YjKhlHjVmey4fKkB6fJX0q0JNdd/SKmQdGLCR+UngwdJESnhiKW1JXLnYuI2tnl/Xlf76eC0", "iterations": 200000};
 
+/* ---------- 復号 (AES-256-GCM + PBKDF2-HMAC-SHA256) ---------- */
 function b64ToBytes(b64) {
   const bin = atob(b64); const arr = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
   return arr;
 }
-
 async function decrypt(password) {
   const enc = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
@@ -63,97 +311,436 @@ async function decrypt(password) {
   return JSON.parse(new TextDecoder().decode(plain));
 }
 
-const yen = (n) => (n >= 0 ? "+" : "") + Number(n).toLocaleString() + "円";
+/* ---------- ユーティリティ ---------- */
+const fmt = (n) => Math.round(Number(n)).toLocaleString("ja-JP");
+const yen = (n) => (n >= 0 ? "+" : "−") + fmt(Math.abs(n)) + "円";
 const cls = (n) => (n >= 0 ? "pos" : "neg");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g,
+  c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const isDark = () => matchMedia("(prefers-color-scheme: dark)").matches;
 
+/* 戦略 → 固定色 (categorical, バリデータPASS済み・固定順割当) */
+const STRAT_COLORS = {
+  "ネットキャッシュ投資法": "#2E7FE8",
+  "シクリカルバリュー投資": "#D4569B",
+  "メタトレンド投資": "#1F9D66",
+  "適時開示アルファ": "#C07E1F",
+};
+const stratDot = (s) =>
+  `<span class="dot" style="background:${STRAT_COLORS[s] || "var(--faint)"}"></span>`;
+const TRACK_JA = { short: "⚡短期", long: "🌱長期NISA" };
+const EXIT_JA = { stop_loss: "損切り", trailing_stop: "トレーリング利確",
+  take_profit: "利確", time_exit: "期間満了", signal: "シグナル" };
+
+function countUp(el, target, dur) {
+  if (reduceMotion || Math.abs(target) < 1) {
+    el.textContent = yen(target); return;
+  }
+  const t0 = performance.now();
+  (function tick(t) {
+    const p = Math.min((t - t0) / dur, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = yen(target * ease);
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+
+function ringSVG(pct, size, stroke, color) {
+  const r = (size - stroke) / 2, c = 2 * Math.PI * r;
+  const off = c * (1 - Math.min(Math.max(pct, 0), 1));
+  return `<svg width="${size}" height="${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none"
+      stroke="var(--ring-track)" stroke-width="${stroke}"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none"
+      stroke="${color}" stroke-width="${stroke}" stroke-linecap="round"
+      stroke-dasharray="${c}" stroke-dashoffset="${reduceMotion ? off : c}"
+      style="transition: stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1)"
+      data-off="${off}"/>
+  </svg>`;
+}
+
+/* ---------- 紙吹雪 (最高益更新時のみ・reduced-motion時は無効) ---------- */
+function confetti() {
+  if (reduceMotion) return;
+  const cv = document.getElementById("confetti");
+  const ctx = cv.getContext("2d");
+  cv.width = innerWidth; cv.height = innerHeight;
+  const colors = ["#2E7FE8", "#D4569B", "#1F9D66", "#C07E1F", "#FFD666"];
+  const parts = Array.from({ length: 130 }, () => ({
+    x: Math.random() * cv.width, y: -20 - Math.random() * cv.height * .4,
+    w: 6 + Math.random() * 6, h: 8 + Math.random() * 8,
+    vy: 2.2 + Math.random() * 3, vx: -1.5 + Math.random() * 3,
+    rot: Math.random() * Math.PI, vr: -.12 + Math.random() * .24,
+    c: colors[(Math.random() * colors.length) | 0],
+  }));
+  const t0 = performance.now();
+  (function frame(t) {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for (const p of parts) {
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h); ctx.restore();
+    }
+    if (t - t0 < 2600) requestAnimationFrame(frame);
+    else ctx.clearRect(0, 0, cv.width, cv.height);
+  })(t0);
+}
+
+/* ---------- 描画 ---------- */
 function render(d) {
   const k = d.kpi;
-  let h = `<h1>📊 Epitaph 運用成績</h1>
-    <p class="muted">生成: ${d.generated_at} / データ更新: ${d.last_updated}</p>
-    <div class="kpis">
-      <div class="card"><div class="label">保有銘柄</div><div class="val">${k.position_count}</div></div>
-      <div class="card"><div class="label">含み損益</div><div class="val ${cls(k.total_unrealized)}">${yen(k.total_unrealized)}</div></div>
-      <div class="card"><div class="label">実現損益累計</div><div class="val ${cls(k.total_realized)}">${yen(k.total_realized)}</div></div>
-      <div class="card"><div class="label">勝率</div><div class="val">${k.win_rate}%</div></div>
-      <div class="card"><div class="label">取引数</div><div class="val">${k.trade_count}</div></div>
-    </div>`;
-
-  if (d.cumulative && d.cumulative.length) {
-    h += `<h2>実現損益の推移</h2><canvas id="chart" height="120"></canvas>`;
-  }
-
-  if (d.positions.length) {
-    h += `<h2>保有ポジション</h2><div class="tbl-wrap"><table>
-      <tr><th>銘柄</th><th>トラック</th><th>取得</th><th>現在</th><th>含み損益</th><th>SL</th><th>TP</th></tr>`;
-    for (const p of d.positions) {
-      const tr = p.track === "short" ? "短期" : "長期";
-      h += `<tr><td>${p.code} ${p.name}</td><td>${tr}</td><td>${p.entry.toLocaleString()}</td>
-        <td>${p.current.toLocaleString()}</td><td class="${cls(p.pnl_pct)}">${p.pnl_pct >= 0 ? "+" : ""}${p.pnl_pct.toFixed(1)}%</td>
-        <td>${p.stop_loss ? p.stop_loss.toLocaleString() : "—"}</td>
-        <td>${p.take_profit ? p.take_profit.toLocaleString() : "—"}</td></tr>`;
-    }
-    h += `</table></div>`;
-  }
-
-  if (d.trades.length) {
-    const rl = {stop_loss:"損切り", trailing_stop:"トレーリング", take_profit:"利確", time_exit:"期間", signal:"シグナル"};
-    h += `<h2>直近の決済トレード</h2><div class="tbl-wrap"><table>
-      <tr><th>決済日</th><th>銘柄</th><th>損益</th><th>損益率</th><th>保有</th><th>理由</th></tr>`;
-    for (const t of d.trades) {
-      h += `<tr><td>${t.date}</td><td>${t.code} ${t.name}</td>
-        <td class="${cls(t.pnl)}">${yen(t.pnl)}</td>
-        <td class="${cls(t.pnl_pct)}">${t.pnl_pct >= 0 ? "+" : ""}${t.pnl_pct.toFixed(2)}%</td>
-        <td>${t.holding_days != null ? t.holding_days + "日" : "—"}</td>
-        <td>${rl[t.exit_reason] || t.exit_reason || "—"}</td></tr>`;
-    }
-    h += `</table></div>`;
-  }
-
-  if (d.calibration && d.calibration.length) {
-    h += `<h2>AI較正実績（確信度別）</h2><div class="tbl-wrap"><table>
-      <tr><th>確信度帯</th><th>件数</th><th>勝率</th><th>平均損益率</th></tr>`;
-    for (const c of d.calibration) {
-      h += `<tr><td>${c.label}</td><td>${c.n}</td><td>${c.win_rate}%</td>
-        <td class="${cls(c.avg_pnl)}">${c.avg_pnl >= 0 ? "+" : ""}${c.avg_pnl}%</td></tr>`;
-    }
-    h += `</table></div>`;
-  }
-
-  if (!d.positions.length && !d.trades.length) {
-    h += `<h2>🟡 ウォームアップ中</h2><p class="muted">まだ取引記録がありません。日次実行が回り始めると数値が入ります。</p>`;
-  }
-
+  const total = k.total_realized + k.total_unrealized;
   const app = document.getElementById("app");
-  app.innerHTML = h;
-  app.style.display = "block";
-  document.getElementById("gate").style.display = "none";
+  const hasData = d.positions.length || d.trades.length;
 
-  if (d.cumulative && d.cumulative.length) {
-    new Chart(document.getElementById("chart"), {
+  /* 前回訪問との差分 (localStorage) */
+  let visitDelta = null, newATH = false;
+  try {
+    const prev = JSON.parse(localStorage.getItem("epitaph_visit") || "null");
+    if (prev && typeof prev.total === "number") visitDelta = total - prev.total;
+    newATH = k.ath > 0 && prev && typeof prev.ath === "number" && k.ath > prev.ath;
+    localStorage.setItem("epitaph_visit",
+      JSON.stringify({ total, ath: k.ath, ts: Date.now() }));
+  } catch (e) {}
+
+  let h = `
+  <div class="top">
+    <div class="brand">EPITAPH</div>
+    <div class="asof"><span class="pulse"></span>データ ${esc(d.last_updated)}</div>
+  </div>
+
+  <div class="hero glass">
+    <div class="label">通算損益（実現＋含み）</div>
+    <div class="big num ${cls(total)}" id="heroNum">±0円</div>
+    <div class="split">
+      <span class="chip ${cls(k.total_realized)}">実現 <b class="num">${yen(k.total_realized)}</b></span>
+      <span class="chip ${cls(k.total_unrealized)}">含み <b class="num">${yen(k.total_unrealized)}</b></span>
+      ${visitDelta !== null && Math.abs(visitDelta) >= 1
+        ? `<span class="chip ${cls(visitDelta)}">前回比 <b class="num">${yen(visitDelta)}</b></span>` : ""}
+    </div>
+    <div class="ath-badge" id="athBadge">🏆 最高益 更新！</div>
+  </div>`;
+
+  if (!hasData) {
+    h += `
+    <div class="card glass warm">
+      <div class="orbit"></div>
+      <h3>システム稼働中 — 初トレード待機</h3>
+      <p>毎朝の分析は動いています。シグナルが約定した瞬間から、<br>
+      ここに損益カーブと連勝記録が刻まれていきます。</p>
+    </div>`;
+  }
+
+  /* 月次目標リング + 連勝 */
+  const target = d.monthly_target || 1;
+  const prog = d.month_realized / target;
+  const remain = Math.max(target - d.month_realized, 0);
+  const sType = d.streak.type, sN = d.streak.count;
+  const sFace = !sN ? "🎯" : sType === "win" ? (sN >= 3 ? "🔥" : "✨") : "🧊";
+  const sText = !sN ? "記録待ち" : sType === "win" ? `${sN}連勝中` : `${sN}連敗中`;
+
+  h += `
+  <div class="grid2">
+    <div class="card glass" style="margin-bottom:0">
+      <h2><span class="em">🎯</span>今月の目標 +5%</h2>
+      <div class="ring-wrap">
+        <div class="ring-box">
+          ${ringSVG(prog, 116, 11, prog >= 1 ? "var(--pos)" : "var(--accent)")}
+          <div class="ring-center">
+            <div class="pct num">${Math.round(prog * 100)}%</div>
+            <div class="cap">${esc(d.this_month)}</div>
+          </div>
+        </div>
+        <div class="ring-info">
+          <div class="line1 num ${cls(d.month_realized)}">${yen(d.month_realized)}</div>
+          <div class="line2 num">目標 ${fmt(d.monthly_target)}円</div>
+          <div class="line3 num">${prog >= 1 ? "🎉 目標達成！" : "あと " + fmt(remain) + "円"}</div>
+        </div>
+      </div>
+    </div>
+    <div class="card glass tile" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:center;">
+      <div class="streak-face">${sFace}</div>
+      <div class="streak-num">${sText}</div>
+      <div class="streak-cap">最長連勝 ${d.streak.longest_win} / 通算 ${k.trade_count} トレード</div>
+    </div>
+  </div>`;
+
+  /* KPIタイル */
+  h += `<div class="kpis">
+    <div class="tile glass">
+      <div class="t-label">勝率</div>
+      <div class="t-val num">${k.win_rate}%</div>
+      <div class="t-sub">${k.trade_count}戦</div>
+    </div>
+    <div class="tile glass">
+      <div class="t-label">損益レシオ</div>
+      <div class="t-val num">${k.profit_factor ?? "—"}</div>
+      <div class="t-sub">総利益÷総損失</div>
+    </div>
+    <div class="tile glass">
+      <div class="t-label">保有中</div>
+      <div class="t-val num">${k.position_count}</div>
+      <div class="t-sub">銘柄</div>
+    </div>
+    <div class="tile glass">
+      <div class="t-label">平均保有</div>
+      <div class="t-val num">${k.avg_hold_days ?? "—"}</div>
+      <div class="t-sub">日</div>
+    </div>
+  </div>`;
+
+  /* 記録バッジ */
+  if (d.records.best || d.records.worst) {
+    h += `<div class="card glass"><h2><span class="em">🏅</span>記録</h2>`;
+    if (d.records.best) h += `<div class="rec-row">
+      <span>👑 ベストトレード</span><span class="who">${esc(d.records.best.name)}</span>
+      <b class="num pos-c">${yen(d.records.best.pnl)}</b></div>`;
+    if (d.records.worst && d.records.worst.pnl < 0) h += `<div class="rec-row">
+      <span>📉 最大ドロー</span><span class="who">${esc(d.records.worst.name)}</span>
+      <b class="num neg-c">${yen(d.records.worst.pnl)}</b></div>`;
+    h += `<div class="rec-row"><span>💎 最高到達益</span><span></span>
+      <b class="num">${fmt(k.ath)}円</b></div></div>`;
+  }
+
+  /* 損益カーブ */
+  if (d.cumulative.length) {
+    h += `<div class="card glass"><h2><span class="em">📈</span>実現損益カーブ</h2>
+      <div class="chart-box"><canvas id="equityChart"></canvas></div>
+      <div class="chart-note">確定した損益の積み上がり。ホバー/タップで日別の値を表示。</div></div>`;
+  }
+  if (d.monthly.length) {
+    h += `<div class="card glass"><h2><span class="em">📊</span>月次実現損益</h2>
+      <div class="chart-box" style="height:180px"><canvas id="monthlyChart"></canvas></div>
+      <div class="chart-note">月次目標: +${fmt(d.monthly_target)}円（資金の5%）</div></div>`;
+  }
+
+  /* 保有ポジション */
+  if (d.positions.length) {
+    h += `<h2 style="font-size:13.5px;color:var(--muted);letter-spacing:.08em;
+      font-weight:700;margin:22px 6px 12px;">💼 保有ポジション</h2>`;
+    for (const p of d.positions) {
+      const sl = p.stop_loss, tp = p.take_profit;
+      let hpHtml = "";
+      if (sl && tp && tp > sl) {
+        const cur = Math.min(Math.max((p.current - sl) / (tp - sl), 0), 1);
+        const ent = Math.min(Math.max((p.entry - sl) / (tp - sl), 0), 1);
+        hpHtml = `<div class="hp">
+            <div class="hp-fill" style="width:0" data-w="${(cur*100).toFixed(1)}%"></div>
+            <div class="hp-cursor" style="left:calc(${(ent*100).toFixed(1)}% - 2px);
+                 opacity:.35" title="取得価格"></div>
+          </div>
+          <div class="hp-labels"><span>SL ${fmt(sl)}</span>
+            <span>利確ライン ${fmt(tp)}</span></div>`;
+      } else if (sl) {
+        hpHtml = `<div class="hp-labels"><span>SL ${fmt(sl)}</span>
+          <span>🚀 トレーリング中（利確上限なし）</span></div>`;
+      }
+      const conv = p.conviction != null
+        ? `<span class="tag">AI確信度 <b class="num">${Math.round(p.conviction * 100)}%</b></span>` : "";
+      h += `<div class="pos-card glass">
+        <div class="pos-head">
+          <div class="pos-name">${esc(p.name)}<span class="pos-code num">${esc(p.code)}</span></div>
+          <div class="pos-pnl num ${cls(p.pnl_pct)}" style="color:var(--${cls(p.pnl_pct)})">
+            ${p.pnl_pct >= 0 ? "+" : ""}${Number(p.pnl_pct).toFixed(1)}%</div>
+        </div>
+        <div class="pos-meta">
+          <span class="tag">${TRACK_JA[p.track] || p.track}</span>
+          <span class="tag">${stratDot(p.strategy)}${esc(p.strategy)}</span>
+          ${conv}
+          ${p.days != null ? `<span class="tag num">${p.days}日目</span>` : ""}
+        </div>
+        ${hpHtml}
+        <div class="pos-nums num">
+          <span>取得 ${fmt(p.entry)}円 × ${fmt(p.shares)}株</span>
+          <span>現在 ${fmt(p.current)}円</span>
+          <span class="${cls(p.pnl)}" style="color:var(--${cls(p.pnl)});font-weight:700">${yen(p.pnl)}</span>
+        </div>
+      </div>`;
+    }
+  }
+
+  /* 直近トレード */
+  if (d.trades.length) {
+    h += `<div class="card glass"><h2><span class="em">🧾</span>直近の決済</h2>`;
+    for (const t of d.trades.slice(0, 12)) {
+      const win = t.pnl >= 0;
+      h += `<div class="trade">
+        <div class="w-orb ${win ? "win" : "loss"}">${win ? "W" : "L"}</div>
+        <div class="mid">
+          <div class="nm">${esc(t.name)} <span class="pos-code num">${esc(t.code)}</span></div>
+          <div class="dt num">${esc(t.date)} ・ ${EXIT_JA[t.exit_reason] || esc(t.exit_reason || "—")}
+            ${t.holding_days != null ? `・${t.holding_days}日` : ""}</div>
+        </div>
+        <div class="amt num" style="color:var(--${cls(t.pnl)})">${yen(t.pnl)}
+          <span class="p">${t.pnl_pct >= 0 ? "+" : ""}${Number(t.pnl_pct).toFixed(2)}%</span></div>
+      </div>`;
+    }
+    h += `</div>`;
+  }
+
+  /* AI Bull vs Bear */
+  if (d.ai_stories.length) {
+    h += `<div class="card glass"><h2><span class="em">🤖</span>AI ディベート（強気 vs 弱気）</h2>`;
+    for (const s of d.ai_stories) {
+      const vc = s.verdict === "veto" ? "v-veto" : s.verdict === "reduce" ? "v-reduce" : "v-proceed";
+      const vt = s.verdict === "veto" ? "見送り" : s.verdict === "reduce" ? "縮小" : "GO";
+      let outcome = "";
+      if (s.outcome) {
+        outcome = `<div class="duel-outcome" style="color:var(--${s.outcome.win ? "pos" : "neg"})">
+          結果: ${s.outcome.win ? "✅ 勝ち" : "❌ 負け"}
+          ${s.outcome.pnl_pct != null ? `(${s.outcome.pnl_pct >= 0 ? "+" : ""}${Number(s.outcome.pnl_pct).toFixed(1)}%)` : ""}</div>`;
+      }
+      h += `<div class="duel">
+        <div class="duel-head"><span>${esc(s.name)} <span class="pos-code num">${esc(s.code)}</span></span>
+          <span class="verdict ${vc}">${vt}</span></div>
+        <div class="duel-body">
+          <div class="side bull"><div class="s-tag">🐂 強気</div>${esc(s.bull) || "—"}</div>
+          <div class="side bear"><div class="s-tag">🐻 弱気</div>${esc(s.bear) || "—"}</div>
+        </div>${outcome}</div>`;
+    }
+    h += `</div>`;
+  }
+
+  /* AI較正 */
+  if (d.calibration.length) {
+    h += `<div class="card glass"><h2><span class="em">🎓</span>AI較正（確信度の答え合わせ）</h2>`;
+    for (const c of d.calibration) {
+      h += `<div class="cal-row">
+        <span>${esc(c.label)}</span>
+        <div class="cal-bar"><div class="cal-fill" style="width:0" data-w="${c.win_rate}%"></div></div>
+        <span class="cal-side num">勝率${c.win_rate}%・${c.n}件</span>
+      </div>`;
+    }
+    h += `<div class="chart-note">AIの確信度が実際の勝率と一致しているかの検証。乖離すると自動でサイズ縮小されます。</div></div>`;
+  }
+
+  /* NISA枠 */
+  if (d.nisa && d.nisa.limit > 0) {
+    const used = d.nisa.used || 0;
+    const pct = Math.min(used / d.nisa.limit * 100, 100);
+    h += `<div class="card glass"><h2><span class="em">🌱</span>NISA成長投資枠 ${esc(d.nisa.year)}</h2>
+      <div class="nisa-bar"><div class="nisa-fill" data-w="${pct.toFixed(1)}%"></div></div>
+      <div class="nisa-cap num"><span>使用 ${fmt(used)}円</span>
+        <span>残り ${fmt(Math.max(d.nisa.limit - used, 0))}円</span></div></div>`;
+  }
+
+  h += `<div class="foot">
+    生成 ${esc(d.generated_at)} ・ このページは AES-256-GCM 暗号文のみを含み、
+    復号は端末内で行われます<br>投資判断は自己責任で。Epitaph は助言ではありません。
+  </div>`;
+
+  app.innerHTML = h;
+
+  /* ゲート退場 → アプリ入場 */
+  const gate = document.getElementById("gate");
+  document.getElementById("gateCard").classList.add("away");
+  setTimeout(() => {
+    gate.style.display = "none";
+    app.style.display = "block";
+    requestAnimationFrame(() => app.classList.add("in"));
+
+    countUp(document.getElementById("heroNum"), total, 1300);
+    /* リング・バーのアニメ発火 */
+    for (const el of document.querySelectorAll("[data-off]"))
+      requestAnimationFrame(() => el.style.strokeDashoffset = el.dataset.off);
+    for (const el of document.querySelectorAll("[data-w]"))
+      requestAnimationFrame(() => el.style.width = el.dataset.w);
+
+    if (newATH) {
+      document.getElementById("athBadge").style.display = "block";
+      setTimeout(confetti, 500);
+    }
+    drawCharts(d);
+  }, 420);
+}
+
+/* ---------- Chart.js ---------- */
+let charts = [];
+function drawCharts(d) {
+  if (typeof Chart === "undefined") return;
+  for (const c of charts) c.destroy();
+  charts = [];
+  const dark = isDark();
+  const gridC = dark ? "rgba(255,255,255,.07)" : "rgba(30,45,90,.08)";
+  const tickC = dark ? "#9AA5BC" : "#5A6478";
+  const accent = dark ? "#2E7FE8" : "#1D63C7";
+  const pos = dark ? "#3DD68C" : "#177A4C";
+  const neg = dark ? "#FF6B6B" : "#C43D3D";
+  Chart.defaults.font.family = "-apple-system, 'Hiragino Sans', Meiryo, sans-serif";
+
+  const eq = document.getElementById("equityChart");
+  if (eq && d.cumulative.length) {
+    const ctx = eq.getContext("2d");
+    const grad = ctx.createLinearGradient(0, 0, 0, 210);
+    grad.addColorStop(0, dark ? "rgba(46,127,232,.35)" : "rgba(29,99,199,.25)");
+    grad.addColorStop(1, "rgba(46,127,232,0)");
+    charts.push(new Chart(eq, {
       type: "line",
       data: { labels: d.cumulative.map(x => x.date),
-        datasets: [{ label: "実現損益(円)", data: d.cumulative.map(x => x.pnl),
-          borderColor: "#4f46e5", backgroundColor: "rgba(79,70,229,.15)", fill: true, tension: .2 }] },
-      options: { plugins: { legend: { labels: { color: "#94a3b8" } } },
-        scales: { x: { ticks: { color: "#64748b" } }, y: { ticks: { color: "#64748b" } } } }
-    });
+        datasets: [{ label: "実現損益", data: d.cumulative.map(x => x.pnl),
+          borderColor: accent, backgroundColor: grad, fill: true,
+          borderWidth: 2, pointRadius: 0, pointHitRadius: 14, tension: .25 }] },
+      options: { responsive: true, maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: c => " " + yen(c.parsed.y) } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: tickC, maxTicksLimit: 5 } },
+          y: { grid: { color: gridC }, border: { display: false },
+               ticks: { color: tickC, maxTicksLimit: 5,
+                 callback: v => fmt(v) } } } }
+    }));
+  }
+
+  const mo = document.getElementById("monthlyChart");
+  if (mo && d.monthly.length) {
+    charts.push(new Chart(mo, {
+      type: "bar",
+      data: { labels: d.monthly.map(x => x.month),
+        datasets: [{ label: "月次実現損益", data: d.monthly.map(x => x.pnl),
+          backgroundColor: d.monthly.map(x => x.pnl >= 0 ? pos : neg),
+          borderRadius: 6, maxBarThickness: 34 }] },
+      options: { responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: c => " " + yen(c.parsed.y) } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: tickC } },
+          y: { grid: { color: gridC }, border: { display: false },
+               ticks: { color: tickC, maxTicksLimit: 5, callback: v => fmt(v) } } } }
+    }));
   }
 }
 
+/* テーマ切替でチャート色を追従 */
+let lastData = null;
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => {
+  if (lastData) drawCharts(lastData);
+});
+
+/* ---------- 解錠 ---------- */
 async function unlock() {
   const pw = document.getElementById("pw").value;
   const err = document.getElementById("err");
-  err.textContent = "復号中...";
+  const card = document.getElementById("gateCard");
+  if (!pw) return;
+  err.textContent = "復号中…";
   try {
     const data = await decrypt(pw);
     err.textContent = "";
+    lastData = data;
     render(data);
   } catch (e) {
     err.textContent = "パスワードが違います";
+    card.classList.remove("shake");
+    void card.offsetWidth;
+    card.classList.add("shake");
   }
 }
 document.getElementById("unlock").addEventListener("click", unlock);
-document.getElementById("pw").addEventListener("keydown", (e) => { if (e.key === "Enter") unlock(); });
+document.getElementById("pw").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") unlock();
+});
 </script>
 </body>
 </html>
