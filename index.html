@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Epitaph ダッシュボード</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+         margin: 0; background: #0f172a; color: #e2e8f0; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 16px; }
+  .gate { max-width: 380px; margin: 15vh auto; text-align: center; padding: 24px; }
+  .gate input { width: 100%; padding: 12px; font-size: 16px; border-radius: 8px;
+                border: 1px solid #334155; background: #1e293b; color: #e2e8f0; margin: 12px 0; }
+  .gate button { width: 100%; padding: 12px; font-size: 16px; border: none; border-radius: 8px;
+                 background: #4f46e5; color: #fff; cursor: pointer; }
+  .err { color: #f87171; font-size: 14px; min-height: 20px; }
+  h1 { font-size: 20px; } h2 { font-size: 16px; color: #94a3b8; margin-top: 28px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .card { background: #1e293b; border-radius: 10px; padding: 14px; }
+  .card .label { font-size: 12px; color: #94a3b8; } .card .val { font-size: 22px; font-weight: bold; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 8px; border-bottom: 1px solid #334155; text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  .pos { color: #34d399; } .neg { color: #f87171; }
+  .muted { color: #64748b; font-size: 12px; }
+  .tbl-wrap { overflow-x: auto; }
+  #app { display: none; }
+</style>
+</head>
+<body>
+<div id="gate" class="gate">
+  <h1>🔒 Epitaph ダッシュボード</h1>
+  <p class="muted">閲覧パスワードを入力してください</p>
+  <input id="pw" type="password" placeholder="パスワード" autofocus>
+  <button id="unlock">表示する</button>
+  <div id="err" class="err"></div>
+</div>
+
+<div id="app" class="wrap"></div>
+
+<script>
+const ENC = {"salt": "j/1YjrP7l31dw0bHKHB6yA==", "iv": "TNfkJrflvvn4CYzs", "ct": "cIipiJVYwD1EeumpzpBUhdCgMLTXt55P0JNZ8iQr1L0fzXstdU+r3LEv6wgR5Q3n5ybDd7YDNFvWqsqaE9d3xcHmz3U9fZ/kTi+d7br7dmnXadl27rbT2hhUAQgfNahdCsSvCw22weogQNxy/8cHRmlhyxOYsVhRLrHX+F4f8Pi8DSnCtmGVOBCWM+W/NXoz/OEl/1ErFYjQxIBtDUI8JJERUFWUFF62EOQJKRWg3ccleFkRu4Q6i81NlLvYCDHph00zCpAVCzJ/jl6j2/6jLj3wMWV3wzJ0e34m/Jc24hGoCFVP1VsPayyHTIb1U6D7sPIYIG3P+5EnbW3bDzCMrA==", "iterations": 200000};
+
+function b64ToBytes(b64) {
+  const bin = atob(b64); const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+
+async function decrypt(password) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: b64ToBytes(ENC.salt), iterations: ENC.iterations, hash: "SHA-256" },
+    keyMaterial, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  const plain = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: b64ToBytes(ENC.iv) }, key, b64ToBytes(ENC.ct));
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+
+const yen = (n) => (n >= 0 ? "+" : "") + Number(n).toLocaleString() + "円";
+const cls = (n) => (n >= 0 ? "pos" : "neg");
+
+function render(d) {
+  const k = d.kpi;
+  let h = `<h1>📊 Epitaph 運用成績</h1>
+    <p class="muted">生成: ${d.generated_at} / データ更新: ${d.last_updated}</p>
+    <div class="kpis">
+      <div class="card"><div class="label">保有銘柄</div><div class="val">${k.position_count}</div></div>
+      <div class="card"><div class="label">含み損益</div><div class="val ${cls(k.total_unrealized)}">${yen(k.total_unrealized)}</div></div>
+      <div class="card"><div class="label">実現損益累計</div><div class="val ${cls(k.total_realized)}">${yen(k.total_realized)}</div></div>
+      <div class="card"><div class="label">勝率</div><div class="val">${k.win_rate}%</div></div>
+      <div class="card"><div class="label">取引数</div><div class="val">${k.trade_count}</div></div>
+    </div>`;
+
+  if (d.cumulative && d.cumulative.length) {
+    h += `<h2>実現損益の推移</h2><canvas id="chart" height="120"></canvas>`;
+  }
+
+  if (d.positions.length) {
+    h += `<h2>保有ポジション</h2><div class="tbl-wrap"><table>
+      <tr><th>銘柄</th><th>トラック</th><th>取得</th><th>現在</th><th>含み損益</th><th>SL</th><th>TP</th></tr>`;
+    for (const p of d.positions) {
+      const tr = p.track === "short" ? "短期" : "長期";
+      h += `<tr><td>${p.code} ${p.name}</td><td>${tr}</td><td>${p.entry.toLocaleString()}</td>
+        <td>${p.current.toLocaleString()}</td><td class="${cls(p.pnl_pct)}">${p.pnl_pct >= 0 ? "+" : ""}${p.pnl_pct.toFixed(1)}%</td>
+        <td>${p.stop_loss ? p.stop_loss.toLocaleString() : "—"}</td>
+        <td>${p.take_profit ? p.take_profit.toLocaleString() : "—"}</td></tr>`;
+    }
+    h += `</table></div>`;
+  }
+
+  if (d.trades.length) {
+    const rl = {stop_loss:"損切り", trailing_stop:"トレーリング", take_profit:"利確", time_exit:"期間", signal:"シグナル"};
+    h += `<h2>直近の決済トレード</h2><div class="tbl-wrap"><table>
+      <tr><th>決済日</th><th>銘柄</th><th>損益</th><th>損益率</th><th>保有</th><th>理由</th></tr>`;
+    for (const t of d.trades) {
+      h += `<tr><td>${t.date}</td><td>${t.code} ${t.name}</td>
+        <td class="${cls(t.pnl)}">${yen(t.pnl)}</td>
+        <td class="${cls(t.pnl_pct)}">${t.pnl_pct >= 0 ? "+" : ""}${t.pnl_pct.toFixed(2)}%</td>
+        <td>${t.holding_days != null ? t.holding_days + "日" : "—"}</td>
+        <td>${rl[t.exit_reason] || t.exit_reason || "—"}</td></tr>`;
+    }
+    h += `</table></div>`;
+  }
+
+  if (d.calibration && d.calibration.length) {
+    h += `<h2>AI較正実績（確信度別）</h2><div class="tbl-wrap"><table>
+      <tr><th>確信度帯</th><th>件数</th><th>勝率</th><th>平均損益率</th></tr>`;
+    for (const c of d.calibration) {
+      h += `<tr><td>${c.label}</td><td>${c.n}</td><td>${c.win_rate}%</td>
+        <td class="${cls(c.avg_pnl)}">${c.avg_pnl >= 0 ? "+" : ""}${c.avg_pnl}%</td></tr>`;
+    }
+    h += `</table></div>`;
+  }
+
+  if (!d.positions.length && !d.trades.length) {
+    h += `<h2>🟡 ウォームアップ中</h2><p class="muted">まだ取引記録がありません。日次実行が回り始めると数値が入ります。</p>`;
+  }
+
+  const app = document.getElementById("app");
+  app.innerHTML = h;
+  app.style.display = "block";
+  document.getElementById("gate").style.display = "none";
+
+  if (d.cumulative && d.cumulative.length) {
+    new Chart(document.getElementById("chart"), {
+      type: "line",
+      data: { labels: d.cumulative.map(x => x.date),
+        datasets: [{ label: "実現損益(円)", data: d.cumulative.map(x => x.pnl),
+          borderColor: "#4f46e5", backgroundColor: "rgba(79,70,229,.15)", fill: true, tension: .2 }] },
+      options: { plugins: { legend: { labels: { color: "#94a3b8" } } },
+        scales: { x: { ticks: { color: "#64748b" } }, y: { ticks: { color: "#64748b" } } } }
+    });
+  }
+}
+
+async function unlock() {
+  const pw = document.getElementById("pw").value;
+  const err = document.getElementById("err");
+  err.textContent = "復号中...";
+  try {
+    const data = await decrypt(pw);
+    err.textContent = "";
+    render(data);
+  } catch (e) {
+    err.textContent = "パスワードが違います";
+  }
+}
+document.getElementById("unlock").addEventListener("click", unlock);
+document.getElementById("pw").addEventListener("keydown", (e) => { if (e.key === "Enter") unlock(); });
+</script>
+</body>
+</html>
