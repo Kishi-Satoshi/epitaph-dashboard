@@ -208,6 +208,69 @@
                  font-variant-numeric: tabular-nums; min-width: 46px; }
   .sg-e { color: var(--muted); }
   .sg-a.muted { color: var(--faint); font-weight: 500; }
+  .strat-guide { flex: none; width: 20px; height: 20px; border-radius: 50%;
+                 border: 1px solid var(--stroke2); background: var(--glass-strong);
+                 color: var(--muted); font-size: 12px; line-height: 1; cursor: pointer;
+                 padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+  .strat-guide:active { transform: scale(.9); }
+
+  /* 投資法ガイド: FAB + モーダル */
+  #guideFab { position: fixed; right: 18px; bottom: 20px; z-index: 40;
+              width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--stroke);
+              background: var(--glass-strong); backdrop-filter: blur(18px) saturate(160%);
+              -webkit-backdrop-filter: blur(18px) saturate(160%);
+              box-shadow: 0 8px 26px rgba(0,0,0,.28); font-size: 23px; cursor: pointer;
+              display: none; opacity: 0; transform: scale(.6);
+              transition: opacity .4s, transform .4s cubic-bezier(.2,.8,.2,1); }
+  #guideFab.show { display: block; opacity: 1; transform: scale(1); }
+  #guideFab:active { transform: scale(.92); }
+  #guide { position: fixed; inset: 0; z-index: 50; display: none; }
+  #guide.show { display: block; }
+  .guide-scrim { position: absolute; inset: 0; background: rgba(6,10,20,.5);
+                 backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+                 opacity: 0; animation: scrimIn .3s forwards; }
+  @keyframes scrimIn { to { opacity: 1; } }
+  .guide-panel { position: absolute; left: 0; right: 0; bottom: 0; max-height: 88vh;
+                 border-radius: 26px 26px 0 0; padding: 8px 16px 24px;
+                 display: flex; flex-direction: column;
+                 transform: translateY(100%); animation: sheetIn .42s cubic-bezier(.2,.85,.2,1) forwards; }
+  @media (min-width: 620px) {
+    .guide-panel { left: 50%; right: auto; bottom: auto; top: 50%; width: 560px; max-height: 82vh;
+                   border-radius: 24px; transform: translate(-50%, -46%); animation: sheetInC .4s forwards; }
+    @keyframes sheetInC { from { opacity: 0; transform: translate(-50%, -42%); }
+                          to { opacity: 1; transform: translate(-50%, -50%); } }
+  }
+  @keyframes sheetIn { to { transform: translateY(0); } }
+  .guide-top { display: flex; align-items: center; justify-content: space-between;
+               padding: 10px 4px 8px; position: sticky; top: 0; }
+  .guide-top h2 { font-size: 17px; font-weight: 800; }
+  #guideClose { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--stroke2);
+                background: var(--glass-strong); color: var(--muted); font-size: 15px; cursor: pointer; }
+  .guide-body { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 2px 2px 6px; }
+  .guide-intro { font-size: 11px; color: var(--faint); line-height: 1.7; margin-bottom: 12px;
+                 padding: 10px 12px; border-radius: 12px; background: var(--glass); }
+  .g-item { border: 1px solid var(--stroke2); border-radius: 16px; margin-bottom: 10px;
+            overflow: hidden; background: var(--glass); }
+  .g-head { width: 100%; display: flex; align-items: center; gap: 8px; padding: 13px 14px;
+            background: none; border: none; cursor: pointer; text-align: left; color: var(--ink); }
+  .g-name { font-weight: 700; font-size: 13.5px; flex: 1; }
+  .g-badges { display: flex; gap: 5px; }
+  .g-badge { font-size: 9px; padding: 2px 7px; border-radius: 999px; font-weight: 700;
+             color: var(--muted); background: var(--glass-strong); border: 1px solid var(--stroke2);
+             white-space: nowrap; }
+  .g-badge.bt-y { color: var(--pos); } .g-badge.bt-n { color: var(--faint); }
+  .g-caret { color: var(--faint); font-size: 12px; transition: transform .25s; }
+  .g-item.open .g-caret { transform: rotate(180deg); }
+  .g-panel { max-height: 0; overflow: hidden; transition: max-height .35s ease;
+             padding: 0 14px; }
+  .g-item.open .g-panel { max-height: 640px; padding: 2px 14px 14px; }
+  .g-tag { font-size: 12.5px; font-weight: 700; color: var(--accent); line-height: 1.6;
+           margin: 4px 0 10px; }
+  .g-row, .g-risk { display: grid; grid-template-columns: 68px 1fr; gap: 10px;
+                    padding: 7px 0; border-top: 1px solid var(--stroke2); }
+  .g-h { font-size: 10.5px; color: var(--faint); font-weight: 700; padding-top: 1px; }
+  .g-t { font-size: 12px; color: var(--muted); line-height: 1.65; }
+  .g-risk .g-h { color: var(--neg); }
 
   /* ポジションカード */
   .pos-card { padding: 16px 18px; margin-bottom: 12px; }
@@ -315,8 +378,21 @@
 
 <div id="app" class="wrap"></div>
 
+<!-- 投資法ガイド: 常設の小ボタン→タップで開くモーダル（常時表示はしない） -->
+<button id="guideFab" aria-label="投資法ガイドを開く" title="投資法ガイド">📖</button>
+<div id="guide" role="dialog" aria-modal="true" aria-label="投資法ガイド">
+  <div class="guide-scrim"></div>
+  <div class="guide-panel glass">
+    <div class="guide-top">
+      <h2>📖 投資法ガイド</h2>
+      <button id="guideClose" aria-label="閉じる">✕</button>
+    </div>
+    <div class="guide-body" id="guideBody"></div>
+  </div>
+</div>
+
 <script>
-const ENC = {"salt": "oMMDj6pFbcP++ded2UPMIw==", "iv": "J0TRYpsmbpwjZOqx", "ct": "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", "iterations": 200000};
+const ENC = {"salt": "TSxr22jZ/TF7h8IEPPpJ7A==", "iv": "9lL2BmErPQ4jSALZ", "ct": "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", "iterations": 200000};
 
 /* ---------- 復号 (AES-256-GCM + PBKDF2-HMAC-SHA256) ---------- */
 function b64ToBytes(b64) {
@@ -357,6 +433,98 @@ const stratDot = (s) =>
 const TRACK_JA = { short: "⚡短期", long: "🌱長期NISA" };
 const EXIT_JA = { stop_loss: "損切り", trailing_stop: "トレーリング利確",
   take_profit: "利確", time_exit: "期間満了", signal: "シグナル" };
+
+/* 投資法ガイド（教育目的の解説テキスト・非機密のためHTMLに直書き） */
+const GUIDE = [
+  { key: "ネットキャッシュ投資法", dot: STRAT_COLORS["ネットキャッシュ投資法"],
+    track: "🌱 長期・NISA", bt: true,
+    tag: "会社の“純現金 > 時価総額”という、お釣りが出るほど割安な株を買う。",
+    body: [
+      ["狙い", "純現金（現金＋短期投資−有利子負債）が時価総額を上回る銘柄＝理論上、事業価値をタダで手に入れる。清原達郎氏の割安小型株の考え方。"],
+      ["買う条件", "ネットキャッシュ比率が高い小型株。さらに品質フィルタ（営業利益が黒字・ROEが一定以上）を満たすものだけに絞る。"],
+      ["売る条件", "損切り / トレーリング利確 / 目標到達 / 割安の解消。"],
+      ["向く相場", "下落相場に強い（バランスシートの安全域が下値を支える）。"],
+    ],
+    risk: "“万年割安”で株価が動かないバリュートラップに注意。過去成績はサバイバーシップバイアスで上振れしている。" },
+
+  { key: "シクリカルバリュー投資", dot: STRAT_COLORS["シクリカルバリュー投資"],
+    track: "🌱 長期・NISA", bt: true,
+    tag: "業績が波打つ景気敏感株を、循環の“谷”で拾う。",
+    body: [
+      ["狙い", "半導体・素材・海運など景気循環株。業績と株価が周期的に上下するので、底で買い天井で売るのが理想。"],
+      ["買う条件", "割安圏に沈んだ景気敏感株。"],
+      ["売る条件", "循環の山（業績ピーク）に近づいたら利確、崩れたら損切り。"],
+      ["向く相場", "景気回復の入口で大きく伸びる。"],
+    ],
+    risk: "監査で「低PER＝業績ピーク＝本来は売り局面なのに買ってしまう罠」を指摘。バックテストは好成績だがこの理論的弱点は未解決のため、いまは慎重に（ペーパーで再検証中）。" },
+
+  { key: "メタトレンド投資", dot: STRAT_COLORS["メタトレンド投資"],
+    track: "⚡ 短期", bt: false,
+    tag: "ニュースの地合い（センチメント）に乗る。",
+    body: [
+      ["狙い", "LLMがニュース見出しを読み、強気/弱気・カタリスト・関連度を判定し、テーマ株の勢いに乗る。"],
+      ["買う条件", "複数ソースが言及し、LLMが強気センチメント＋カタリストありと判定したとき（見出しは非信頼データとして扱い、煽り・操作に耐性）。"],
+      ["売る条件", "損切り / トレーリング利確 / 期間満了。"],
+      ["向く相場", "明確な上昇トレンド局面。"],
+    ],
+    risk: "優位性は弱め（監査評価）。ニュースは既に織り込まれていることが多く“出遅れ乗り”になりやすい。過去ニュースを再現できずバックテスト対象外。" },
+
+  { key: "適時開示アルファ", dot: STRAT_COLORS["適時開示アルファ"],
+    track: "⚡ 短期（主力）", bt: false,
+    tag: "決算・開示のサプライズに、機関投資家より一歩早く反応する。",
+    body: [
+      ["狙い", "小型株のPEAD（決算発表後の株価ドリフト）。開示直後、株価は一度に全部は動かず数日〜数週間かけて反応が続く。この“取り残された利益”を狙う。"],
+      ["買う条件", "TDnetの全開示をLLMが分類し、上方修正・自社株買い等のポジティブなサプライズを検出。上位候補はPDF本文まで精読し、実際の修正幅（対計画・対前年％、自社株買いの発行済比率）で判断。"],
+      ["売る条件", "損切り / トレーリング利確 / ドリフト一巡。"],
+      ["向く相場", "相場全体の地合いに依存しにくい“本物のエッジ”（監査評価）。"],
+    ],
+    risk: "反応が速すぎると往復ビンタ、開示解釈を誤るリスク。過去開示を再現できずバックテスト対象外（前向きペーパーで検証）。" },
+];
+const GUIDE_KEYS = new Set(GUIDE.map(g => g.key));
+
+function renderGuide(focusKey) {
+  const body = document.getElementById("guideBody");
+  body.innerHTML =
+    `<p class="guide-intro">各投資法の「考え方」の説明です。実際の売買は必ずリスク管理
+      （1トレード1%リスク・ATRストップ・ポートフォリオ heat 上限）を通します。
+      これは投資助言ではありません。</p>` +
+    GUIDE.map((g, i) => {
+      const open = focusKey ? (g.key === focusKey) : (i === 0);
+      const rows = g.body.map(([h, t]) =>
+        `<div class="g-row"><span class="g-h">${h}</span><span class="g-t">${esc(t)}</span></div>`).join("");
+      return `<div class="g-item ${open ? "open" : ""}" data-key="${esc(g.key)}">
+        <button class="g-head" aria-expanded="${open}">
+          <span class="dot" style="background:${g.dot}"></span>
+          <span class="g-name">${esc(g.key)}</span>
+          <span class="g-badges">
+            <span class="g-badge">${g.track}</span>
+            <span class="g-badge ${g.bt ? "bt-y" : "bt-n"}">${g.bt ? "BTあり" : "BT対象外"}</span>
+          </span>
+          <span class="g-caret">▾</span>
+        </button>
+        <div class="g-panel">
+          <div class="g-tag">${esc(g.tag)}</div>
+          ${rows}
+          <div class="g-risk"><span class="g-h">注意・リスク</span><span class="g-t">${esc(g.risk)}</span></div>
+        </div>
+      </div>`;
+    }).join("");
+}
+
+function openGuide(focusKey) {
+  renderGuide(GUIDE_KEYS.has(focusKey) ? focusKey : null);
+  const g = document.getElementById("guide");
+  g.classList.add("show");
+  document.body.style.overflow = "hidden";
+  if (focusKey) {
+    const el = g.querySelector(`.g-item[data-key="${CSS.escape(focusKey)}"]`);
+    if (el) el.scrollIntoView({ block: "start" });
+  }
+}
+function closeGuide() {
+  document.getElementById("guide").classList.remove("show");
+  document.body.style.overflow = "";
+}
 
 function countUp(el, target, dur) {
   if (reduceMotion || Math.abs(target) < 1) {
@@ -561,8 +729,10 @@ function render(d) {
         <div class="sg-l">${label}</div>
         <div class="sg-e num">${ev}</div>
         <div class="sg-a num ${av === "—" ? "muted" : ""}">${av}</div>`;
+      const guideBtn = GUIDE_KEYS.has(s.name)
+        ? `<button class="strat-guide" data-guide="${esc(s.name)}" aria-label="この投資法の説明">ⓘ</button>` : "";
       h += `<div class="strat">
-        <div class="strat-head">${stratDot(s.name)}<span class="strat-name">${esc(s.name)}</span>${realTag}</div>
+        <div class="strat-head">${stratDot(s.name)}<span class="strat-name">${esc(s.name)}</span>${guideBtn}${realTag}</div>
         <div class="strat-sub">${expChip}</div>
         <div class="strat-grid">
           <div class="sg-h"></div><div class="sg-h">期待値<span>BT</span></div><div class="sg-h">実績<span>紙</span></div>
@@ -710,6 +880,7 @@ function render(d) {
   setTimeout(() => {
     gate.style.display = "none";
     app.style.display = "block";
+    document.getElementById("guideFab").classList.add("show");
     requestAnimationFrame(() => app.classList.add("in"));
 
     countUp(document.getElementById("heroNum"), total, 1300);
@@ -812,6 +983,27 @@ async function unlock() {
 document.getElementById("unlock").addEventListener("click", unlock);
 document.getElementById("pw").addEventListener("keydown", (e) => {
   if (e.key === "Enter") unlock();
+});
+
+/* ---------- 投資法ガイド ---------- */
+document.getElementById("guideFab").addEventListener("click", () => openGuide());
+document.getElementById("guideClose").addEventListener("click", closeGuide);
+document.querySelector("#guide .guide-scrim").addEventListener("click", closeGuide);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeGuide();
+});
+/* モーダル内: アコーディオン開閉 */
+document.getElementById("guideBody").addEventListener("click", (e) => {
+  const head = e.target.closest(".g-head");
+  if (!head) return;
+  const item = head.closest(".g-item");
+  const open = item.classList.toggle("open");
+  head.setAttribute("aria-expanded", open);
+});
+/* アプリ内: 戦略名などの [data-guide] タップでその戦略のガイドを開く */
+document.getElementById("app").addEventListener("click", (e) => {
+  const t = e.target.closest("[data-guide]");
+  if (t) openGuide(t.getAttribute("data-guide"));
 });
 </script>
 </body>
