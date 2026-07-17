@@ -184,6 +184,31 @@
   .chart-box { position: relative; height: 210px; }
   .chart-note { font-size: 10.5px; color: var(--faint); margin-top: 10px; }
 
+  /* 戦略別 期待値 vs 実績 */
+  .strat { padding: 14px 0; border-bottom: 1px solid var(--stroke2); }
+  .strat:last-child { border-bottom: none; padding-bottom: 2px; }
+  .strat-head { display: flex; align-items: center; gap: 8px; }
+  .strat-name { font-weight: 700; font-size: 14px; flex: 1;
+                overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .strat-real { font-size: 15px; font-weight: 800; white-space: nowrap; }
+  .strat-real.muted { color: var(--faint); font-weight: 600; font-size: 12px; }
+  .strat-sub { margin: 7px 0 11px; }
+  .strat-chip { font-size: 11px; padding: 4px 11px; border-radius: 999px; font-weight: 700;
+                background: var(--glass-strong); border: 1px solid var(--stroke2);
+                color: var(--muted); display: inline-flex; align-items: baseline; gap: 7px; }
+  .strat-chip.muted { font-weight: 500; color: var(--faint); }
+  .strat-chip .chip-sub { font-size: 10px; color: var(--faint); font-weight: 600; }
+  .strat-grid { display: grid; grid-template-columns: 1fr auto auto; gap: 7px 16px;
+                align-items: center; }
+  .sg-h { font-size: 9.5px; color: var(--faint); letter-spacing: .05em; text-align: right; }
+  .sg-h span { display: inline-block; margin-left: 4px; padding: 1px 5px; border-radius: 5px;
+               background: var(--ring-track); font-size: 8.5px; }
+  .sg-l { font-size: 12px; color: var(--muted); }
+  .sg-e, .sg-a { text-align: right; font-size: 13px; font-weight: 700;
+                 font-variant-numeric: tabular-nums; min-width: 46px; }
+  .sg-e { color: var(--muted); }
+  .sg-a.muted { color: var(--faint); font-weight: 500; }
+
   /* ポジションカード */
   .pos-card { padding: 16px 18px; margin-bottom: 12px; }
   .pos-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
@@ -291,7 +316,7 @@
 <div id="app" class="wrap"></div>
 
 <script>
-const ENC = {"salt": "VSKmqpPcrS+NMEFyxFFFMw==", "iv": "oAxYFfNxFAcKnCjp", "ct": "AC5hLFpzRpk/nbDc/017HqXC+sZEGrAH6YVc8tTUD9jkgoaD1/TREhHRmvmL7ZHnMfzVsTfeF6e6MFXGUraU0SN0yIWgZCUEM9EH2nSRUcfzGacMRKk2nWCVboMhi1sy57ISF+BBr63J94yczeJTgMWjnOa3oRmTKSgcYIoplZWoHFGT7DTtKx1sdN+NR6Xjqfr8/GShjwq3JSo8QT2V7M6Ltndjp0GStK23BMLyqphkLCszUlVmofUEDef38iysNx5/jwhXG4IA37cW7hg6tFx0HtTsCYbcIkwCwdgPmdSDPU6pFIdLED/13bmigz974SyV/hWR2j0JfdsdME+4Lg8+vQtDmdzh/6RSpFz8PizPNtij3HW1c2Y/3qn+hP2xMSyUfU7xKaZj1CrOvQldC7YfR7I9LEzJv+4ZcxBDLoZrGaiDrYaqnYj15v6JBFC0vBY0WNSqdJFzm0nlA9rVuQZoM/rNsy+s9uvzXnNts2evm9gFjEOIrFxWuARovAFbvNK6X02fe0ERjQAtXFcyMSx+oe9nGA6924gwJVmLZl40qbqwuoVkj0M8NugrIk9uxtBtg0ICxyfwilBg9pjyoIyq10eBXvWN2XZt/T8Gyqm4VdiVWLId2u46zct+yLStzvG8Fp2pdEWtLSnXSB+Qc8OvVSjC4zDKEoFs708Ae0sJriwR65P8CdZtciWzJ56AVkfdM2fgIA60uER9YjKhlHjVmey4fKkB6fJX0q0JNdd/SKmQdGLCR+UngwdJESnhiKW1JXLnYuI2tnl/Xlf76eC0", "iterations": 200000};
+const ENC = {"salt": "oMMDj6pFbcP++ded2UPMIw==", "iv": "J0TRYpsmbpwjZOqx", "ct": "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", "iterations": 200000};
 
 /* ---------- 復号 (AES-256-GCM + PBKDF2-HMAC-SHA256) ---------- */
 function b64ToBytes(b64) {
@@ -513,6 +538,53 @@ function render(d) {
     h += `<div class="card glass"><h2><span class="em">📊</span>月次実現損益</h2>
       <div class="chart-box" style="height:180px"><canvas id="monthlyChart"></canvas></div>
       <div class="chart-note">月次目標: +${fmt(d.monthly_target)}円（資金の5%）</div></div>`;
+  }
+
+  /* 戦略別: 期待値(BT) vs 実績(ペーパー)。合計KPIは変えず内訳を見せる */
+  if (d.strategies && d.strategies.length) {
+    const bm = d.backtest_meta || {};
+    h += `<div class="card glass"><h2><span class="em">🎛️</span>戦略別 期待値 vs 実績</h2>
+      <div class="chart-note" style="margin:-2px 0 14px">
+        「期待値」はバックテスト（${esc(bm.period || "")}・${fmt(bm.capital || 0)}円）の数字＝<b>仮説</b>。
+        サバイバーシップ等で上振れしています。<b>「実績」が前向きペーパーの真の姿</b>で、
+        これが期待値に近づくかを見ます。</div>`;
+    for (const s of d.strategies) {
+      const a = s.actual, e = s.expected;
+      const realTag = a
+        ? `<span class="strat-real num" style="color:var(--${cls(a.realized)})">${yen(a.realized)}</span>`
+        : `<span class="strat-real muted">実績なし</span>`;
+      const expChip = e
+        ? `<span class="strat-chip">BT期待 <b class="num">${e.return_pct >= 0 ? "+" : ""}${e.return_pct}%</b>
+             <span class="chip-sub num">年率${e.annual_pct >= 0 ? "+" : ""}${e.annual_pct}%</span></span>`
+        : `<span class="strat-chip muted">${esc(s.expected_reason || "バックテスト対象外")}</span>`;
+      const row = (label, ev, av) => `
+        <div class="sg-l">${label}</div>
+        <div class="sg-e num">${ev}</div>
+        <div class="sg-a num ${av === "—" ? "muted" : ""}">${av}</div>`;
+      h += `<div class="strat">
+        <div class="strat-head">${stratDot(s.name)}<span class="strat-name">${esc(s.name)}</span>${realTag}</div>
+        <div class="strat-sub">${expChip}</div>
+        <div class="strat-grid">
+          <div class="sg-h"></div><div class="sg-h">期待値<span>BT</span></div><div class="sg-h">実績<span>紙</span></div>
+          ${row("勝率",
+              e ? e.win_rate + "%" : "—",
+              a && a.win_rate != null ? a.win_rate + "%" : "—")}
+          ${row("損益レシオ",
+              e ? e.profit_factor : "—",
+              a && a.profit_factor != null ? a.profit_factor : "—")}
+          ${row("トレード数",
+              e ? e.trades : "—",
+              a ? a.trades : "0")}
+          ${row("平均保有",
+              e ? e.avg_hold + "日" : "—",
+              a && a.avg_hold != null ? a.avg_hold + "日" : "—")}
+          ${row("1取引平均",
+              "—",
+              a && a.avg_pnl_pct != null ? (a.avg_pnl_pct >= 0 ? "+" : "") + a.avg_pnl_pct + "%" : "—")}
+        </div>
+      </div>`;
+    }
+    h += `</div>`;
   }
 
   /* 保有ポジション */
