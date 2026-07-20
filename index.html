@@ -214,6 +214,20 @@
                  padding: 0; display: inline-flex; align-items: center; justify-content: center; }
   .strat-guide:active { transform: scale(.9); }
 
+  /* 判断ダッシュボード: 鮮度・警告・moon・セクション区切り */
+  .stale-banner { background: rgba(255,107,107,.12); border: 1px solid rgba(255,107,107,.45);
+    color: var(--neg); padding: 13px 16px; border-radius: 14px; font-size: 12.5px;
+    font-weight: 700; line-height: 1.6; margin-bottom: 14px; }
+  .status-ok { font-size: 11px; color: var(--faint); margin: 2px 6px 14px; }
+  .warn-card { border-color: rgba(255,107,107,.5) !important; }
+  .warn-item { font-size: 12px; color: var(--neg); padding: 7px 0; line-height: 1.65;
+    border-bottom: 1px solid var(--stroke2); }
+  .warn-item:last-child { border-bottom: none; }
+  .sec-label { font-size: 10.5px; color: var(--faint); letter-spacing: .06em;
+    font-weight: 700; margin: 26px 6px 10px; }
+  .moon-card { border-color: rgba(157,107,255,.4) !important; }
+  .moon-thesis { font-size: 12px; color: var(--muted); line-height: 1.7; margin: 8px 0 10px; }
+
   /* 投資法ガイド: FAB + モーダル */
   #guideFab { position: fixed; right: 18px; bottom: 20px; z-index: 40;
               width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--stroke);
@@ -338,6 +352,7 @@
   .cal-side { text-align: right; color: var(--muted); }
 
   /* NISAゲージ */
+  .nisa-lbl { font-size: 10.5px; color: var(--faint); margin-bottom: 6px; }
   .nisa-bar { height: 14px; border-radius: 999px; background: var(--ring-track); overflow: hidden; }
   .nisa-fill { height: 100%; border-radius: 999px;
                background: linear-gradient(90deg, #1F9D66, #2E7FE8); width: 0;
@@ -392,7 +407,7 @@
 </div>
 
 <script>
-const ENC = {"salt": "tr7kdiwoUUVVuBBtn94TMA==", "iv": "OYAboYtXyHkIsSs7", "ct": "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", "iterations": 600000};
+const ENC = {"salt": "V6nWW019MQErjuh0B3zcRQ==", "iv": "qml9H3DZ1gnlxRwq", "ct": "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", "iterations": 600000};
 
 /* ---------- 復号 (AES-256-GCM + PBKDF2-HMAC-SHA256) ---------- */
 function b64ToBytes(b64) {
@@ -430,7 +445,7 @@ const STRAT_COLORS = {
 };
 const stratDot = (s) =>
   `<span class="dot" style="background:${STRAT_COLORS[s] || "var(--faint)"}"></span>`;
-const TRACK_JA = { short: "⚡短期", long: "🌱長期NISA" };
+const TRACK_JA = { short: "⚡短期", long: "🌱長期NISA", moon: "🚀ムーンショット" };
 const EXIT_JA = { stop_loss: "損切り", trailing_stop: "トレーリング利確",
   take_profit: "利確", time_exit: "期間満了", signal: "シグナル" };
 
@@ -597,12 +612,63 @@ function render(d) {
       JSON.stringify({ total, ath: k.ath, ts: Date.now() }));
   } catch (e) {}
 
-  let h = `
-  <div class="top">
-    <div class="brand">EPITAPH</div>
-    <div class="asof"><span class="pulse"></span>データ ${esc(d.last_updated)}</div>
-  </div>
+  /* ── 判断セクションの部品（関数宣言は巻き上げされるため定義位置は自由） ── */
 
+  function freshnessBanner() {
+    /* ダッシュボード自身が「止まっている」ことを叫ぶ（表示層のfail-silent対策）。
+       データ日が3日超前なら赤帯。週末を跨いでも金曜データは月曜まで正常扱い。 */
+    if (!d.last_updated || d.last_updated === "—") return "";
+    const dt = new Date(d.last_updated + "T15:00:00+09:00");
+    if (isNaN(dt.getTime())) return "";
+    const days = Math.floor((Date.now() - dt.getTime()) / 86400000);
+    if (days <= 3) return "";
+    return `<div class="stale-banner">⚠️ データが <b>${days}日前（${esc(d.last_updated)}）</b>から更新されていません
+      — PC・タスクスケジューラ・同期の停止を確認してください</div>`;
+  }
+
+  function statusCard() {
+    /* LINEを見逃した週にダッシュボードだけ健康な顔をしない: 日次バッチの
+       システム警告を永続表示。「警告なし」と「状態不明」は区別する。 */
+    const st = d.status || {};
+    if (!st.available) {
+      return `<div class="status-ok">🩺 システム警告: 状態ファイル未同期（判定不能 — 初回同期後に表示されます）</div>`;
+    }
+    if (!st.warnings || !st.warnings.length) {
+      return `<div class="status-ok">🩺 システム警告なし <span class="num">(${esc(st.date || "")})</span></div>`;
+    }
+    let x = `<div class="card glass warn-card"><h2><span class="em">🚨</span>システム警告（${esc(st.date || "")}）</h2>`;
+    for (const w of st.warnings) x += `<div class="warn-item">${esc(w)}</div>`;
+    x += `<div class="chart-note">警告はLINEにも送信済み。解消されるまで毎日ここに表示されます。</div></div>`;
+    return x;
+  }
+
+  function shadowCard() {
+    /* AIの寄与（評価プロトコル§4）: CLIでしか見えなかった答えを画面へ */
+    const s = d.shadow || {};
+    if (!s.available) return "";
+    const side = (o, label) => o
+      ? `<div class="sg-l">${label}</div>
+         <div class="sg-e num">${o.n}件・PF${o.pf ?? "—"}・勝率${o.win_rate}%</div>
+         <div class="sg-a num" style="color:var(--${cls(o.total_pnl)})">${yen(o.total_pnl)}</div>`
+      : `<div class="sg-l">${label}</div><div class="sg-e num">決済なし</div><div class="sg-a num">—</div>`;
+    const verdictJa = {
+      pending: "⏳ 判定保留（各側20件たまったら自動判定）",
+      ai_wins: "✅ AI層はプラス寄与（API費用と比較して最終判断を）",
+      ai_loses: "❌ AI層はマイナス寄与 — 機械のみへの縮退を検討（プロトコル§4）",
+      mixed: "➖ PFと累計の符号が不一致 — 継続観察",
+    }[s.verdict] || "";
+    return `<div class="card glass"><h2><span class="em">🤖</span>AIの寄与（本体 vs 機械のみ）</h2>
+      <div class="strat-grid">
+        <div class="sg-h"></div><div class="sg-h">成績</div><div class="sg-h">累計損益</div>
+        ${side(s.real, "本体(AI込み)")}
+        ${side(s.shadow, "シャドー(機械)")}
+      </div>
+      <div class="chart-note">${verdictJa}。同一シグナルをAI選抜あり/なしで並走させた確定損益の比較。</div></div>`;
+  }
+
+  function heroCard() {
+    return `
+  <div class="sec-label">📊 ここから下は参考値（成績の観賞用 — 判断は上の判断セクションで）</div>
   <div class="hero glass">
     <div class="label">通算損益（実現＋含み）</div>
     <div class="big num ${cls(total)}" id="heroNum">±0円</div>
@@ -614,6 +680,25 @@ function render(d) {
     </div>
     <div class="ath-badge" id="athBadge">🏆 最高益 更新！</div>
   </div>`;
+  }
+
+  let h = `
+  <div class="top">
+    <div class="brand">EPITAPH</div>
+    <div class="asof"><span class="pulse"></span>データ ${esc(d.last_updated)}</div>
+  </div>`;
+
+  /* ── 判断セクション（先頭）: 鮮度 → 警告 → G1ゲート → 戦略別 → AI寄与。
+     評価プロトコル§7（毎日の損益で一喜一憂しない）に合わせ、判断に使う
+     情報を先頭に置き、損益などの"感情の数字"は下段へ降格する。 ── */
+  h += freshnessBanner();
+  h += statusCard();
+  h += g1Card();
+  h += strategyCard();
+  h += shadowCard();
+
+  /* ── 感情セクション（参考値） ── */
+  h += heroCard();
 
   if (!hasData) {
     h += `
@@ -708,8 +793,10 @@ function render(d) {
       <div class="chart-note">月次目標: +${fmt(d.monthly_target)}円（資金の5%）</div></div>`;
   }
 
-  /* 戦略別: 期待値(BT) vs 実績(ペーパー)。合計KPIは変えず内訳を見せる */
-  if (d.strategies && d.strategies.length) {
+  /* 戦略別: 期待値(BT) vs 実績(ペーパー)。判断セクション（先頭）から呼ばれる */
+  function strategyCard() {
+    if (!d.strategies || !d.strategies.length) return "";
+    let h = "";
     const bm = d.backtest_meta || {};
     h += `<div class="card glass"><h2><span class="em">🎛️</span>戦略別 期待値 vs 実績</h2>
       <div class="chart-note" style="margin:-2px 0 14px">
@@ -756,13 +843,39 @@ function render(d) {
       </div>`;
     }
     h += `</div>`;
+    return h;
   }
 
-  /* 保有ポジション */
-  if (d.positions.length) {
+  /* 🚀 ムーンショット枠: 仮説主体の表示（価格でなく仮説で判断する枠のため、
+     損益は非強調。設計思想は docs/MOONSHOT.md） */
+  const moonPos = d.positions.filter(p => p.track === "moon");
+  const corePos = d.positions.filter(p => p.track !== "moon");
+  if (moonPos.length) {
+    h += `<h2 style="font-size:13.5px;color:var(--muted);letter-spacing:.08em;
+      font-weight:700;margin:22px 6px 12px;">🚀 ムーンショット枠（仮説で判断・価格は見ない）</h2>`;
+    for (const p of moonPos) {
+      const months = p.days != null ? Math.max(1, Math.round(p.days / 30.44)) : null;
+      h += `<div class="pos-card glass moon-card">
+        <div class="pos-head">
+          <div class="pos-name">${esc(p.name)}<span class="pos-code num">${esc(p.code)}</span></div>
+          <span class="tag num">${months != null ? "保有" + months + "ヶ月目" : ""}</span>
+        </div>
+        <div class="moon-thesis">${esc(p.reason || "（仮説メモなし）")}</div>
+        <div class="pos-nums num" style="color:var(--faint)">
+          <span>取得 ${fmt(p.entry)}円 × ${fmt(p.shares)}株</span>
+          <span>現在 ${fmt(p.current)}円</span>
+        </div>
+      </div>`;
+    }
+    h += `<div class="chart-note" style="margin:-4px 6px 14px">売る理由は「仮説の崩壊」のみ。
+      下落そのものは売る理由になりません（月初のLINE点検で判断）。</div>`;
+  }
+
+  /* 保有ポジション（コア: 短期・長期） */
+  if (corePos.length) {
     h += `<h2 style="font-size:13.5px;color:var(--muted);letter-spacing:.08em;
       font-weight:700;margin:22px 6px 12px;">💼 保有ポジション</h2>`;
-    for (const p of d.positions) {
+    for (const p of corePos) {
       const sl = p.stop_loss, tp = p.take_profit;
       let hpHtml = "";
       if (sl && tp && tp > sl) {
@@ -858,14 +971,44 @@ function render(d) {
     h += `<div class="chart-note">AIの確信度が実際の勝率と一致しているかの検証。乖離すると自動でサイズ縮小されます。</div></div>`;
   }
 
-  /* NISA枠 */
+  /* G1移行ゲート達成度（評価プロトコル§1）。判断セクション（先頭）から呼ばれる */
+  function g1Card() {
+    if (!d.g1_gate || !d.g1_gate.checks) return "";
+    const g = d.g1_gate;
+    let h = `<div class="card glass"><h2><span class="em">🚦</span>G1移行ゲート ${g.passed}/${g.total} 達成</h2>`;
+    for (const c of g.checks) {
+      const v = (c.value === null || c.value === undefined) ? "—" : c.value;
+      const pct = Math.round((c.progress || 0) * 100);
+      h += `<div class="cal-row">
+        <span>${c.ok ? "✅" : "⏳"} ${esc(c.label)}</span>
+        <div class="cal-bar"><div class="cal-fill" style="width:0" data-w="${pct}%"></div></div>
+        <span class="cal-side num">${esc(String(v))} / ${esc(c.target)}</span>
+      </div>`;
+    }
+    h += `<div class="chart-note">${esc(g.note)} 全達成で1〜5万円の実弾検証（G1）へ。詳細は EVALUATION_PROTOCOL.md / G1_CHECKLIST.md</div></div>`;
+    return h;
+  }
+
+  /* NISA枠（年間＋生涯） */
   if (d.nisa && d.nisa.limit > 0) {
     const used = d.nisa.used || 0;
     const pct = Math.min(used / d.nisa.limit * 100, 100);
-    h += `<div class="card glass"><h2><span class="em">🌱</span>NISA成長投資枠 ${esc(d.nisa.year)}</h2>
+    const lused = d.nisa.lifetime_used || 0;
+    const llim = d.nisa.lifetime_limit || 0;
+    const lpct = llim > 0 ? Math.min(lused / llim * 100, 100) : 0;
+    h += `<div class="card glass"><h2><span class="em">🌱</span>NISA成長投資枠</h2>
+      <div class="nisa-lbl num">年間 ${esc(d.nisa.year)}</div>
       <div class="nisa-bar"><div class="nisa-fill" data-w="${pct.toFixed(1)}%"></div></div>
       <div class="nisa-cap num"><span>使用 ${fmt(used)}円</span>
-        <span>残り ${fmt(Math.max(d.nisa.limit - used, 0))}円</span></div></div>`;
+        <span>残り ${fmt(Math.max(d.nisa.limit - used, 0))}円</span></div>`;
+    if (llim > 0) {
+      h += `<div class="nisa-lbl num" style="margin-top:12px">生涯枠（簿価・成長枠）</div>
+        <div class="nisa-bar"><div class="nisa-fill" data-w="${lpct.toFixed(1)}%"
+          style="background:linear-gradient(90deg,var(--accent2),var(--accent))"></div></div>
+        <div class="nisa-cap num"><span>使用 ${fmt(lused)}円</span>
+          <span>残り ${fmt(Math.max(llim - lused, 0))}円</span></div>`;
+    }
+    h += `</div>`;
   }
 
   h += `<div class="foot">
